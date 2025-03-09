@@ -1,0 +1,22 @@
+=== simulation_og_report.txt ===
+
+Configuration:
+- Number of environments: 100
+- Number of simulation runs: 10
+- Steps per simulation: 1250
+
+Summary Statistics:
+- Average simulation time: 2.585947 seconds (± 1.839122)
+- Average FPS: 674.74 (± 277.78)
+
+Individual Run Results:
+- Run 1: 1.595193 seconds (783.60 FPS)
+- Run 2: 1.424277 seconds (877.64 FPS)
+- Run 3: 1.379628 seconds (906.04 FPS)
+- Run 4: 1.392679 seconds (897.55 FPS)
+- Run 5: 1.571538 seconds (795.40 FPS)
+- Run 6: 1.448524 seconds (862.95 FPS)
+- Run 7: 1.474999 seconds (847.46 FPS)
+- Run 8: 3.423934 seconds (365.08 FPS)
+- Run 9: 6.165054 seconds (202.76 FPS)
+- Run 10: 5.983644 seconds (208.90 FPS)
