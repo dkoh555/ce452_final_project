@@ -1,0 +1,25 @@
+=== simulation_opt1_report.txt ===
+
+Notes:
+reduce data transfer overhead between CPU and GPU by using PyTorch tensors on the GPU for controlling robot actions; improved performance without touching genesis
+
+Configuration:
+- Number of environments: 100
+- Number of simulation runs: 10
+- Steps per simulation: 1250
+
+Summary Statistics:
+- Average simulation time: 1.490555 seconds (± 0.055440)
+- Average FPS: 839.74 (± 30.32)
+
+Individual Run Results:
+- Run 1: 1.611924 seconds (775.47 FPS)
+- Run 2: 1.535947 seconds (813.83 FPS)
+- Run 3: 1.546777 seconds (808.13 FPS)
+- Run 4: 1.486565 seconds (840.86 FPS)
+- Run 5: 1.432139 seconds (872.82 FPS)
+- Run 6: 1.464786 seconds (853.37 FPS)
+- Run 7: 1.462146 seconds (854.91 FPS)
+- Run 8: 1.450122 seconds (862.00 FPS)
+- Run 9: 1.489779 seconds (839.05 FPS)
+- Run 10: 1.425365 seconds (876.97 FPS)

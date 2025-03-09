@@ -7,9 +7,10 @@ import time
 import os
 
 ########################## settings ##########################
-output_file_name = "simulation_optimized_report.txt"
+output_file_name = "simulation_opt1_report.txt"
+file_notes = "reduce data transfer overhead between CPU and GPU by using PyTorch tensors on the GPU for controlling robot actions; improved performance without touching genesis"
 num_simulations = 10
-num_environments = 50
+num_environments = 100
 total_steps = 1250
 run_cProfile = False
 
@@ -139,6 +140,8 @@ print(f"Average FPS: {avg_fps:.2f} (± {std_fps:.2f})")
 
 with open(output_file_name, "w") as f:
     f.write(f"=== {output_file_name} ===\n\n")
+    f.write(f"Notes:\n")
+    f.write(f"{file_notes}\n\n")
     f.write(f"Configuration:\n")
     f.write(f"- Number of environments: {num_environments}\n")
     f.write(f"- Number of simulation runs: {num_simulations}\n")
