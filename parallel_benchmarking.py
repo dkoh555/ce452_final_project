@@ -7,7 +7,7 @@ import time
 import os
 
 ########################## settings ##########################
-output_file_name = "simulation_og_report.txt"
+output_file_name = "simulation_optimized_report.txt"
 num_simulations = 10
 num_environments = 50
 total_steps = 1250
@@ -40,37 +40,25 @@ def run_simulation(franka, dofs_idx, scene):
     # Run a single simulation and return timing information
     simulation_start = time.time()
     
+    # Create tensors once before the loop
+    pos_tensor1 = torch.tensor([1, 1, 0, 0, 0, 0, 0, 0.04, 0.04], device='cuda', dtype=torch.float32)
+    pos_tensor2 = torch.tensor([-1, 0.8, 1, -2, 1, 0.5, -0.5, 0.04, 0.04], device='cuda', dtype=torch.float32)
+    pos_tensor3 = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda', dtype=torch.float32)
+    vel_tensor = torch.tensor([1.0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda', dtype=torch.float32)
+
     for i in range(total_steps):
         if i == 0:
-            franka.control_dofs_position(
-                np.array([1, 1, 0, 0, 0, 0, 0, 0.04, 0.04]),
-                dofs_idx,
-            )
+            franka.control_dofs_position(pos_tensor1, dofs_idx)
         elif i == 250:
-            franka.control_dofs_position(
-                np.array([-1, 0.8, 1, -2, 1, 0.5, -0.5, 0.04, 0.04]),
-                dofs_idx,
-            )
+            franka.control_dofs_position(pos_tensor2, dofs_idx)
         elif i == 500:
-            franka.control_dofs_position(
-                np.array([0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                dofs_idx,
-            )
+            franka.control_dofs_position(pos_tensor3, dofs_idx)
         elif i == 750:
             # control first dof with velocity, and the rest with position
-            franka.control_dofs_position(
-                np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])[1:],
-                dofs_idx[1:],
-            )
-            franka.control_dofs_velocity(
-                np.array([1.0, 0, 0, 0, 0, 0, 0, 0, 0])[:1],
-                dofs_idx[:1],
-            )
+            franka.control_dofs_position(pos_tensor3[1:], dofs_idx[1:])
+            franka.control_dofs_velocity(vel_tensor[:1], dofs_idx[:1])
         elif i == 1000:
-            franka.control_dofs_force(
-                np.array([0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                dofs_idx,
-            )
+            franka.control_dofs_force(pos_tensor3, dofs_idx)
         
         if run_cProfile:
             cProfile.run('scene.step()', f'cProfile_step_sim{sim_num}_step{i}')
