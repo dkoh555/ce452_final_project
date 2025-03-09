@@ -9,12 +9,7 @@ cProfile.run('gs.init(backend=gs.cuda)', 'cProfile_init')
 
 ########################## create a scene ##########################
 scene = gs.Scene(
-    show_viewer    = True,
-    viewer_options = gs.options.ViewerOptions(
-        camera_pos    = (3.5, -1.0, 2.5),
-        camera_lookat = (0.0, 0.0, 0.5),
-        camera_fov    = 40,
-    ),
+    show_viewer = False,
     rigid_options = gs.options.RigidOptions(
         dt                = 0.01,
     ),
@@ -60,6 +55,7 @@ for i in range(150):
     scene.step()
 
 # PD control
+print('Beginning simulation...')
 for i in range(1250):
     if i == 0:
         franka.control_dofs_position(
@@ -93,9 +89,12 @@ for i in range(1250):
         )
     # This is the control force computed based on the given control command
     # If using force control, it's the same as the given control command
-    print('control force:', franka.get_dofs_control_force(dofs_idx))
+    # print('control force:', franka.get_dofs_control_force(dofs_idx))
 
     # This is the actual force experienced by the dof
-    print('internal force:', franka.get_dofs_force(dofs_idx))
+    # print('internal force:', franka.get_dofs_force(dofs_idx))
 
     cProfile.run('scene.step()', 'cProfile_step')
+
+########################## closing ##########################
+print('Simulation finished')
