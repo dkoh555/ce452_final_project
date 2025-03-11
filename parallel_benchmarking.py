@@ -7,12 +7,13 @@ import time
 import os
 
 ########################## settings ##########################
-output_file_name = "simulation_opt1_report.txt"
-file_notes = "reduce data transfer overhead between CPU and GPU by using PyTorch tensors on the GPU for controlling robot actions; improved performance without touching genesis"
+output_file_name = "simulation_opt2_report.txt"
+file_notes = ""
 num_simulations = 10
-num_environments = 100
+num_environments = 1000
 total_steps = 1250
 run_cProfile = False
+run_CUDA_timing = False
 
 ########################## init ##########################
 # Lists to store timing information
@@ -25,15 +26,26 @@ else:
     gs.init(backend=gs.cuda)
 
 def run_hard_reset(franka, dofs_idx, scene):
-    # Hard reset
+    # Hard reset with batched operations
     print('Running hard reset...')
+    
+    # Create batched tensors for reset
+    pos1 = torch.tensor([1, 1, 0, 0, 0, 0, 0, 0.04, 0.04], device='cuda', dtype=torch.float32)
+    pos1_batch = pos1.unsqueeze(0).expand(B, -1)
+    
+    pos2 = torch.tensor([-1, 0.8, 1, -2, 1, 0.5, -0.5, 0.04, 0.04], device='cuda', dtype=torch.float32)
+    pos2_batch = pos2.unsqueeze(0).expand(B, -1)
+    
+    pos3 = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda', dtype=torch.float32)
+    pos3_batch = pos3.unsqueeze(0).expand(B, -1)
+    
     for i in range(150):
         if i < 50:
-            franka.set_dofs_position(np.array([1, 1, 0, 0, 0, 0, 0, 0.04, 0.04]), dofs_idx)
+            franka.set_dofs_position(pos1_batch, dofs_idx)
         elif i < 100:
-            franka.set_dofs_position(np.array([-1, 0.8, 1, -2, 1, 0.5, -0.5, 0.04, 0.04]), dofs_idx)
+            franka.set_dofs_position(pos2_batch, dofs_idx)
         else:
-            franka.set_dofs_position(np.array([0, 0, 0, 0, 0, 0, 0, 0, 0]), dofs_idx)
+            franka.set_dofs_position(pos3_batch, dofs_idx)
         scene.step()
     print('Hard reset complete')
 
@@ -41,13 +53,29 @@ def run_simulation(franka, dofs_idx, scene):
     # Run a single simulation and return timing information
     simulation_start = time.time()
     
+    if run_CUDA_timing:
+        # Set up CUDA timing events
+        torch.cuda.synchronize()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+    
     # Create tensors once before the loop
     pos_tensor1 = torch.tensor([1, 1, 0, 0, 0, 0, 0, 0.04, 0.04], device='cuda', dtype=torch.float32)
     pos_tensor2 = torch.tensor([-1, 0.8, 1, -2, 1, 0.5, -0.5, 0.04, 0.04], device='cuda', dtype=torch.float32)
     pos_tensor3 = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda', dtype=torch.float32)
     vel_tensor = torch.tensor([1.0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda', dtype=torch.float32)
-
+    
+    if run_CUDA_timing:
+        # Track cumulative times
+        total_control_time = 0
+        total_step_time = 0
+    
     for i in range(total_steps):
+        if run_CUDA_timing:
+            # Time control operations
+            torch.cuda.synchronize()
+            start.record()
+        
         if i == 0:
             franka.control_dofs_position(pos_tensor1, dofs_idx)
         elif i == 250:
@@ -61,15 +89,47 @@ def run_simulation(franka, dofs_idx, scene):
         elif i == 1000:
             franka.control_dofs_force(pos_tensor3, dofs_idx)
         
+        if run_CUDA_timing:
+            end.record()
+            torch.cuda.synchronize()
+            control_time = start.elapsed_time(end)
+            total_control_time += control_time
+        
+            # Only print detailed timing for specific steps to avoid console spam
+            if i in [0, 250, 500, 750, 1000]:
+                print(f"Step {i}: Control call took: {control_time:.2f} ms")
+            
+            # Time step operations
+            torch.cuda.synchronize()
+            start.record()
+        
         if run_cProfile:
             cProfile.run('scene.step()', f'cProfile_step_sim{sim_num}_step{i}')
         else:
             scene.step()
+        
+        if run_CUDA_timing:
+            end.record()
+            torch.cuda.synchronize()
+            step_time = start.elapsed_time(end)
+            total_step_time += step_time
+            
+            # Only print detailed timing for specific steps
+            if i in [0, 250, 500, 750, 1000]:
+                print(f"Step {i}: Scene step took: {step_time:.2f} ms")
+     
+    if run_CUDA_timing:
+        # Report overall timing
+        print(f"\nTiming Summary:")
+        print(f"Total control time: {total_control_time:.2f} ms (Average: {total_control_time/total_steps:.2f} ms per step)")
+        print(f"Total step time: {total_step_time:.2f} ms (Average: {total_step_time/total_steps:.2f} ms per step)")
+        print(f"Control operations: {(total_control_time/(total_control_time+total_step_time))*100:.1f}% of total time")
+        print(f"Step operations: {(total_step_time/(total_control_time+total_step_time))*100:.1f}% of total time")
     
     simulation_time = time.time() - simulation_start
     fps = total_steps / simulation_time
 
-    return simulation_time, fps        
+    return simulation_time, fps  
 
 ########################## create a scene ##########################
 scene = gs.Scene(
