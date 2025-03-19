@@ -1,5 +1,30 @@
+# Installation & Setup
+Download the necessary repositories
+```
+# Clone the main repository
+git clone https://github.com/dkoh555/ce452_final_project.git
+
+# Navigate into the repository
+cd ce452_final_project
+
+# Initialize and fetch submodules
+git submodule init
+git submodule update
+```
+Install Genesis locally for development
+```
+# Navigate into the Genesis_optimized submodule
+cd Genesis_optimized
+
+# Install in development mode
+pip install -e .
+
+# Return to main repository
+cd ..
+```
+
 # Running the Benchmark Code
-Simply run the parallel_benchmarking.py code.
+Simply run parallel_benchmarking.py
 
 # Switching between Optimized Versions
 By default, you are on the latest Optimization V2 code.
