@@ -4,7 +4,7 @@ Notes:
 reduce data transfer overhead between CPU and GPU by using PyTorch tensors on the GPU for controlling robot actions; improved performance without touching genesis
 
 Configuration:
-- Number of environments: 100
+- Number of environments: 2500
 - Number of simulation runs: 10
 - Steps per simulation: 1250
 

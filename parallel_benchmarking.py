@@ -7,21 +7,29 @@ import time
 import os
 
 ########################## settings ##########################
-output_file_name = "simulation_opt2_report.txt"
+output_file_name = "simulation_optDRAFT_report.txt"
 file_notes = ""
+num_environments = 2500
 num_simulations = 10
-num_environments = 1000
 total_steps = 1250
-run_cProfile = False
+write_report = False
+run_cProfile_init = False
+run_cProfile_step = True
 run_CUDA_timing = False
+run_visualization = False
 
 ########################## init ##########################
 # Lists to store timing information
 simulation_times = []
 fps_values = []
 
-if run_cProfile:
-    cProfile.run('gs.init(backend=gs.cuda)', 'cProfile_init')
+if run_cProfile_init:
+    profiler = cProfile.Profile()
+    profiler.enable()
+    import genesis as gs
+    gs.init(backend=gs.cuda)
+    profiler.disable()
+    profiler.dump_stats('cProfile_init')
 else:
     gs.init(backend=gs.cuda)
 
@@ -103,8 +111,12 @@ def run_simulation(franka, dofs_idx, scene):
             torch.cuda.synchronize()
             start.record()
         
-        if run_cProfile:
-            cProfile.run('scene.step()', f'cProfile_step_sim{sim_num}_step{i}')
+        if run_cProfile_step and i == 0: # Only cProfile the 1st step
+            profiler = cProfile.Profile()
+            profiler.enable()
+            scene.step()
+            profiler.disable()
+            profiler.dump_stats(f'cProfile_step')
         else:
             scene.step()
         
@@ -133,7 +145,7 @@ def run_simulation(franka, dofs_idx, scene):
 
 ########################## create a scene ##########################
 scene = gs.Scene(
-    show_viewer = False,
+    show_viewer = run_visualization,
     rigid_options = gs.options.RigidOptions(
         dt                = 0.01,
     ),
@@ -198,21 +210,22 @@ print(f"Steps per simulation: {total_steps}")
 print(f"Average simulation time: {avg_time:.6f} seconds (± {std_time:.6f})")
 print(f"Average FPS: {avg_fps:.2f} (± {std_fps:.2f})")
 
-with open(output_file_name, "w") as f:
-    f.write(f"=== {output_file_name} ===\n\n")
-    f.write(f"Notes:\n")
-    f.write(f"{file_notes}\n\n")
-    f.write(f"Configuration:\n")
-    f.write(f"- Number of environments: {num_environments}\n")
-    f.write(f"- Number of simulation runs: {num_simulations}\n")
-    f.write(f"- Steps per simulation: {total_steps}\n\n")
-    
-    f.write(f"Summary Statistics:\n")
-    f.write(f"- Average simulation time: {avg_time:.6f} seconds (± {std_time:.6f})\n")
-    f.write(f"- Average FPS: {avg_fps:.2f} (± {std_fps:.2f})\n\n")
-    
-    f.write(f"Individual Run Results:\n")
-    for i, (time_val, fps_val) in enumerate(zip(simulation_times, fps_values)):
-        f.write(f"- Run {i+1}: {time_val:.6f} seconds ({fps_val:.2f} FPS)\n")
+if write_report:
+    with open(output_file_name, "w") as f:
+        f.write(f"=== {output_file_name} ===\n\n")
+        f.write(f"Notes:\n")
+        f.write(f"{file_notes}\n\n")
+        f.write(f"Configuration:\n")
+        f.write(f"- Number of environments: {num_environments}\n")
+        f.write(f"- Number of simulation runs: {num_simulations}\n")
+        f.write(f"- Steps per simulation: {total_steps}\n\n")
+        
+        f.write(f"Summary Statistics:\n")
+        f.write(f"- Average simulation time: {avg_time:.6f} seconds (± {std_time:.6f})\n")
+        f.write(f"- Average FPS: {avg_fps:.2f} (± {std_fps:.2f})\n\n")
+        
+        f.write(f"Individual Run Results:\n")
+        for i, (time_val, fps_val) in enumerate(zip(simulation_times, fps_values)):
+            f.write(f"- Run {i+1}: {time_val:.6f} seconds ({fps_val:.2f} FPS)\n")
 
-print(f'Completed write to {output_file_name}')
+    print(f'Completed write to {output_file_name}')

@@ -1,0 +1,25 @@
+=== simulation_opt2_report.txt ===
+
+Notes:
+Optimized code improves GPU performance by creating cache-friendly memory layouts with torch.stack, keeping computations on-device to eliminate PCIe transfers, leveraging vectorized operations for SIMD execution, reducing memory overhead through efficient allocation and storage, and organizing tensor dimensions to better match GPU's parallel processing architecture.; while maintaining compatibility with the rest of Genesis by converting the result back to NumPy.
+
+Configuration:
+- Number of environments: 2500
+- Number of simulation runs: 10
+- Steps per simulation: 1250
+
+Summary Statistics:
+- Average simulation time: 1.419372 seconds (± 0.064486)
+- Average FPS: 882.33 (± 36.45)
+
+Individual Run Results:
+- Run 1: 1.603725 seconds (779.44 FPS)
+- Run 2: 1.383777 seconds (903.32 FPS)
+- Run 3: 1.371196 seconds (911.61 FPS)
+- Run 4: 1.382015 seconds (904.48 FPS)
+- Run 5: 1.400602 seconds (892.47 FPS)
+- Run 6: 1.398415 seconds (893.87 FPS)
+- Run 7: 1.441806 seconds (866.97 FPS)
+- Run 8: 1.397305 seconds (894.58 FPS)
+- Run 9: 1.423992 seconds (877.81 FPS)
+- Run 10: 1.390888 seconds (898.71 FPS)

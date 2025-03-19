@@ -1,7 +1,7 @@
 === simulation_og_report.txt ===
 
 Configuration:
-- Number of environments: 100
+- Number of environments: 2500
 - Number of simulation runs: 10
 - Steps per simulation: 1250
 
